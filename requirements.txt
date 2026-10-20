@@ -1,0 +1,25 @@
+# Log Integrity Checker — Python dependencies
+#
+# This project uses only the Python standard library.
+# No third-party packages are required.
+#
+# Minimum runtime: Python 3.9+
+#
+# Standard library modules used:
+#   argparse      - CLI argument parsing
+#   hashlib       - SHA-256 hashing
+#   hmac          - Constant-time digest comparison and CSRF token verification
+#   http.server   - Built-in HTTP server (ThreadingHTTPServer)
+#   json          - Manifest serialisation and API payloads
+#   os            - Filesystem operations and path handling
+#   pathlib       - Object-oriented path manipulation
+#   re            - SHA-256 digest format validation
+#   secrets       - Cryptographically secure random token generation
+#   socket        - IPv6 server support
+#   stat          - File mode checks (regular file detection)
+#   sys           - Exit codes and stderr output
+#   tempfile      - Atomic manifest writes
+#   time          - File-change retry delay
+#   urllib.parse  - URL path parsing in the HTTP handler
+#   fcntl         - POSIX file locking (Unix/macOS only, optional)
+#   msvcrt        - Windows file locking (Windows only, optional)

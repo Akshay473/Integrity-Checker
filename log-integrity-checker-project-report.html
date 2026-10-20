@@ -1,0 +1,239 @@
+
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Log Integrity Checker — Project Report</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f7f8fa;
+    --border: #e5e7eb;
+    --text: #1f2328;
+    --muted: #57606a;
+    --accent: #3b82d4;
+    --ok: #21643c;
+    --ok-soft: #eef6f0;
+    --warn: #7a5714;
+    --warn-soft: #fdf8ee;
+    --navy: #1f4c78;
+    --navy-soft: #edf3f9;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text);
+    background: var(--bg);
+  }
+  .page { max-width: 760px; margin: 0 auto; padding: 40px 28px 60px; }
+  /* Header */
+  .report-header { margin-bottom: 36px; border-bottom: 2px solid var(--border); padding-bottom: 24px; }
+  .report-header h1 { margin: 0 0 6px; font-size: 24px; font-weight: 700; letter-spacing: -0.01em; }
+  .report-header .meta { color: var(--muted); font-size: 12px; display: flex; gap: 20px; flex-wrap: wrap; }
+  .report-header .meta span::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 6px; vertical-align: middle; }
+  /* Sections */
+  h2 { font-size: 15px; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: var(--muted); margin: 32px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 14px; font-weight: 650; margin: 20px 0 8px; color: var(--text); }
+  p { margin: 0 0 12px; }
+  /* Summary grid */
+  .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 28px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; }
+  .stat-card .value { font-size: 26px; font-weight: 700; color: var(--navy); line-height: 1.1; }
+  .stat-card .label { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 20px; }
+  th { background: var(--surface); color: var(--muted); font-size: 11px; font-weight: 650; text-transform: uppercase; letter-spacing: 0.04em; padding: 8px 12px; text-align: left; border-bottom: 2px solid var(--border); }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td code, th code { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 12px; background: var(--surface); padding: 1px 5px; border-radius: 3px; border: 1px solid var(--border); }
+  /* Badges */
+  .badge { display: inline-block; padding: 2px 7px; border-radius: 3px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+  .badge-ok   { background: var(--ok-soft); color: var(--ok); }
+  .badge-new  { background: var(--navy-soft); color: var(--navy); }
+  .badge-note { background: var(--warn-soft); color: var(--warn); }
+  /* Flow diagram */
+  .flow { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 14px 0 20px; font-size: 12px; }
+  .flow-step { background: var(--navy-soft); color: var(--navy); border: 1px solid #c5d8ee; border-radius: 3px; padding: 5px 12px; font-weight: 600; }
+  .flow-arrow { color: var(--muted); font-size: 16px; }
+  /* Code block */
+  pre { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 12px; overflow-x: auto; margin: 0 0 16px; line-height: 1.6; }
+  /* Notice */
+  .notice { padding: 10px 14px; border-left: 3px solid var(--accent); background: var(--navy-soft); border-radius: 0 3px 3px 0; margin-bottom: 16px; font-size: 13px; }
+  /* Footer */
+  .report-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border); text-align: center; color: var(--muted); font-size: 12px; }
+  @media (max-width: 560px) {
+    .page { padding: 24px 16px 40px; }
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="report-header">
+    <h1>Log Integrity Checker</h1>
+    <div class="meta">
+      <span>Version 1.0.0</span>
+      <span>Python 3.9+</span>
+      <span>Zero external dependencies</span>
+      <span>macOS · Linux · Windows</span>
+    </div>
+  </div>
+
+  
+  <div class="summary-grid">
+    <div class="stat-card"><div class="value">1</div><div class="label">Source file</div></div>
+    <div class="stat-card"><div class="value">SHA-256</div><div class="label">Hash algorithm</div></div>
+    <div class="stat-card"><div class="value">0</div><div class="label">External dependencies</div></div>
+    <div class="stat-card"><div class="value">5</div><div class="label">CLI subcommands</div></div>
+    <div class="stat-card"><div class="value">6</div><div class="label">API endpoints</div></div>
+    <div class="stat-card"><div class="value">200 MB</div><div class="label">Max upload size</div></div>
+  </div>
+
+  
+  <h2>Purpose</h2>
+  <p>Log Integrity Checker is a self-contained tool for recording SHA-256 hash baselines of log files and directories, and detecting changes against those baselines. It detects modifications, missing files, and unexpected new files.</p>
+  <p>The tool provides two interfaces from a single Python file: a command-line interface for scripting and automation, and a local web interface for interactive use.</p>
+  <div class="notice">The tool does not send file contents or hashes anywhere. All processing happens locally. No data ever leaves the machine.</div>
+
+  
+  <h2>Architecture</h2>
+  <h3>Single-file design</h3>
+  <p>The entire project lives in <code>app.py</code>. It contains the hashing engine, baseline store, CLI parser, HTTP server, and web UI (inlined HTML/CSS/JS) — all with zero third-party imports.</p>
+
+  <h3>Core data flow</h3>
+  <div class="flow">
+    <div class="flow-step">Input (file / directory / upload)</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">SHA-256 hash</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Baseline store lookup</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Compare / Store</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Result</div>
+  </div>
+
+  <h3>Baseline store</h3>
+  <p>Baselines are stored as per-target JSON manifests in a platform-appropriate user state directory. Writes are atomic (write-to-temp then <code>os.replace</code>) and guarded by a file lock. Manifest files and the store directory are created with owner-only permissions on POSIX systems.</p>
+
+  <table>
+    <thead><tr><th>Platform</th><th>Default store location</th></tr></thead>
+    <tbody>
+      <tr><td>macOS</td><td><code>~/Library/Application Support/log-integrity</code></td></tr>
+      <tr><td>Linux</td><td><code>$XDG_STATE_HOME/log-integrity</code> (fallback: <code>~/.local/state/log-integrity</code>)</td></tr>
+      <tr><td>Windows</td><td><code>%LOCALAPPDATA%\log-integrity</code></td></tr>
+    </tbody>
+  </table>
+
+  
+  <h2>Features</h2>
+
+  <h3>Simple CLI usage</h3>
+  <p>Pass a file or directory directly — no subcommand required. The tool auto-detects whether to initialise a baseline or run a check.</p>
+  <pre>./app.py /var/log/syslog        # first run: creates baseline
+./app.py /var/log/syslog        # second run: checks for changes
+./app.py /var/log/syslog --json # machine-readable output</pre>
+
+  <h3>Web interface — file picker</h3>
+  <p>The web interface (<code>./app.py serve</code>) presents a click-to-browse / drag-and-drop file zone as the primary input. No typing required — click the zone or drag a file onto it, then click <strong>Check integrity</strong>. The first upload stores the baseline automatically; every subsequent upload compares against it.</p>
+
+  <h3>Directory support (advanced)</h3>
+  <p>Server-side directory paths are supported via the Advanced section in the web UI and via CLI subcommands. All regular files under the directory are hashed recursively; symbolic links are skipped.</p>
+
+  <h3>Hashing reliability</h3>
+  <p>Large files are hashed in 1 MB streaming chunks (never fully loaded into memory). Files that change while being read are retried once and then reported as an error, preventing misleading hashes.</p>
+
+  
+  <h2>CLI commands</h2>
+  <table>
+    <thead><tr><th>Command</th><th>Description</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td><code>app.py PATH</code></td><td>Auto-init on first run, auto-check on all later runs</td><td><span class="badge badge-new">New</span></td></tr>
+      <tr><td><code>app.py init PATH</code></td><td>Explicitly create a new baseline</td><td></td></tr>
+      <tr><td><code>app.py check PATH</code></td><td>Compare against the stored baseline</td><td></td></tr>
+      <tr><td><code>app.py update PATH</code></td><td>Accept the current state as the new baseline</td><td></td></tr>
+      <tr><td><code>app.py reinit PATH</code></td><td>Replace an existing baseline (same as <code>init --force</code>)</td><td></td></tr>
+      <tr><td><code>app.py serve</code></td><td>Start the local web interface</td><td></td></tr>
+    </tbody>
+  </table>
+
+  
+  <h2>Web API endpoints</h2>
+  <table>
+    <thead><tr><th>Method</th><th>Endpoint</th><th>Input</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>GET</td><td><code>/</code></td><td>—</td><td>Serve the web UI</td></tr>
+      <tr><td>GET</td><td><code>/healthz</code></td><td>—</td><td>Health check</td></tr>
+      <tr><td>POST</td><td><code>/api/upload</code></td><td><code>multipart/form-data</code></td><td>Upload a file; auto-init or check <span class="badge badge-new">New</span></td></tr>
+      <tr><td>POST</td><td><code>/api/status</code></td><td>JSON</td><td>List all stored baselines</td></tr>
+      <tr><td>POST</td><td><code>/api/init</code></td><td>JSON <code>{path}</code></td><td>Create a baseline for a server-side path</td></tr>
+      <tr><td>POST</td><td><code>/api/check</code></td><td>JSON <code>{path}</code></td><td>Check a server-side path against its baseline</td></tr>
+      <tr><td>POST</td><td><code>/api/update</code></td><td>JSON <code>{path}</code></td><td>Update baseline for a server-side path</td></tr>
+      <tr><td>POST</td><td><code>/api/reinit</code></td><td>JSON <code>{path}</code></td><td>Replace baseline for a server-side path</td></tr>
+    </tbody>
+  </table>
+
+  
+  <h2>Security</h2>
+  <table>
+    <thead><tr><th>Control</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>CSRF token</td><td>Per-process random token (<code>secrets.token_urlsafe</code>) required on all POST requests via <code>X-Integrity-Token</code> header</td></tr>
+      <tr><td>Host header check</td><td>When bound to loopback, requests with non-loopback <code>Host</code> headers are rejected (DNS rebinding protection)</td></tr>
+      <tr><td>Loopback-only default</td><td>Server binds to <code>127.0.0.1</code> by default; not reachable from the network</td></tr>
+      <tr><td>File permissions</td><td>Store directory: <code>0700</code>; manifest files: <code>0600</code> (POSIX only)</td></tr>
+      <tr><td>Atomic writes</td><td>Manifests are written to a temp file and then atomically renamed — no partial writes</td></tr>
+      <tr><td>Constant-time compare</td><td><code>hmac.compare_digest</code> used for all hash comparisons to prevent timing attacks</td></tr>
+      <tr><td>Upload size limit</td><td>200 MB per file upload; JSON API bodies capped at 65 536 bytes</td></tr>
+      <tr><td>Filename sanitisation</td><td>Uploaded filenames are reduced to <code>os.path.basename</code>; path traversal is rejected</td></tr>
+    </tbody>
+  </table>
+
+  
+  <h2>Exit codes</h2>
+  <table>
+    <thead><tr><th>Code</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><code>0</code></td><td>Baseline operation succeeded, or check found no discrepancies</td></tr>
+      <tr><td><code>1</code></td><td>Check found a modified, missing, or new file</td></tr>
+      <tr><td><code>2</code></td><td>Command could not complete, or a check had unreadable files</td></tr>
+    </tbody>
+  </table>
+
+  
+  <h2>Project file inventory</h2>
+  <table>
+    <thead><tr><th>File</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>app.py</code></td><td>Complete CLI, baseline store, SHA-256 hashing engine, multipart upload handler, and web interface (inlined HTML/CSS/JS)</td></tr>
+      <tr><td><code>requirements.txt</code></td><td>Dependency declaration — documents the standard library modules used; no pip-installable packages required</td></tr>
+      <tr><td><code>README.md</code></td><td>User-facing documentation: installation, quick start, commands, behaviour, security model</td></tr>
+      <tr><td><code>.gitignore</code></td><td>Excludes Python cache (<code>__pycache__</code>, <code>*.pyc</code>) and virtual environment directories</td></tr>
+    </tbody>
+  </table>
+
+  
+  <h2>Key functions &amp; modules</h2>
+  <table>
+    <thead><tr><th>Symbol</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td><code>hash_file(path)</code></td><td>Streams a file from disk in 1 MB chunks, verifies stability, returns SHA-256 + size + mtime</td></tr>
+      <tr><td><code>hash_bytes(data)</code></td><td>Hashes an in-memory buffer (used by the upload endpoint)</td></tr>
+      <tr><td><code>parse_multipart(body, boundary)</code></td><td>Pure-stdlib multipart/form-data parser for browser file uploads</td></tr>
+      <tr><td><code>perform_upload(filename, data, store)</code></td><td>Auto-init or auto-check for uploaded file bytes, keyed by filename</td></tr>
+      <tr><td><code>perform_init / perform_check / perform_update</code></td><td>Core baseline operations for server-side filesystem paths</td></tr>
+      <tr><td><code>StoreLock</code></td><td>Cross-platform file lock (fcntl on POSIX, msvcrt on Windows)</td></tr>
+      <tr><td><code>write_manifest()</code></td><td>Atomic manifest write: mkstemp → fsync → os.replace</td></tr>
+      <tr><td><code>make_handler()</code></td><td>Factory that returns the HTTP request handler class with store + token in closure scope</td></tr>
+      <tr><td><code>_is_simple_path_invocation()</code></td><td>Detects bare-path CLI usage before argparse, enabling the no-subcommand UX</td></tr>
+    </tbody>
+  </table>
+
+  <div class="report-footer">Made with IBM Bob</div>
+</div>
+</body>
+</html>
