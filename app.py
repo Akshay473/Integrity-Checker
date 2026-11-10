@@ -882,7 +882,7 @@ def print_check_report(report: Dict[str, Any]) -> None:
         print("Notice: files not present in the baseline were found.")
 
 
-_SUBCOMMANDS = {"init", "reinit", "check", "update", "serve"}
+_SUBCOMMANDS = {"hash", "init", "reinit", "check", "update", "serve"}
 
 
 def _is_simple_path_invocation(argv: List[str]) -> Optional[str]:
@@ -928,6 +928,9 @@ def build_parser() -> argparse.ArgumentParser:
             default=argparse.SUPPRESS,
             help="Baseline store directory. Defaults to the user state directory.",
         )
+
+    hash_parser = subparsers.add_parser("hash", help="Print the SHA-256 hash of a file.")
+    hash_parser.add_argument("path", help="File to hash.")
 
     init_parser = subparsers.add_parser("init", help="Create a new baseline.")
     init_parser.add_argument("path", help="File or directory to baseline.")
@@ -1227,6 +1230,12 @@ def main(argv: Optional[List[str]] = None) -> int:
 
         if args.command == "serve":
             return run_server(store, args.host, args.port)
+        if args.command == "hash":
+            target = canonical_path(args.path)
+            if not target.is_file():
+                raise InvalidInput(f"Not a regular file: {args.path}")
+            print(f"{hash_file(target)['sha256']}  {args.path}")
+            return EXIT_OK
         ensure_store(store)
         if args.command == "init":
             result = perform_init(args.path, store, force=args.force)

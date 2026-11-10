@@ -29,6 +29,14 @@ ln -s app.py integrity-check
 
 On Windows, use `python app.py` in place of `./integrity-check`.
 
+## Hash a file
+
+```bash
+python app.py hash path/to/file
+```
+
+Prints the SHA-256 hash and the file name, same format as `sha256sum`.
+
 ## Quick start
 
 Just pass a file or directory — the tool figures out what to do:
