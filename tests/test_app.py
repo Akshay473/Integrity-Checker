@@ -27,8 +27,8 @@ class Base(unittest.TestCase):
         self.data = self.root / "data"
         self.data.mkdir()
         self.store = str(self.root / "store")
-        (self.data / "a.log").write_text("hello\n")
-        (self.data / "b.log").write_text("world\n")
+        (self.data / "a.log").write_bytes(b"hello\n")
+        (self.data / "b.log").write_bytes(b"world\n")
 
 
 class HashTests(Base):
