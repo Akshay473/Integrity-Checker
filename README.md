@@ -1,5 +1,7 @@
 # Log Integrity Checker
 
+[![tests](https://github.com/Akshay473/Integrity-Checker/actions/workflows/ci.yml/badge.svg)](https://github.com/Akshay473/Integrity-Checker/actions/workflows/ci.yml)
+
 A small, self-contained tool for recording SHA-256 baselines of log files and
 directories and detecting changes against those baselines. It provides a command
 line interface and a local web interface from a single code file.
@@ -239,3 +241,7 @@ It does not identify who changed the file or why.
 | `.github/workflows/ci.yml` | Runs the tests on Linux, macOS and Windows. |
 | `README.md` | This document. |
 | `.gitignore` | Keeps Python cache and virtual environment files out of version control. |
+
+## License
+
+MIT. See [LICENSE](LICENSE).
