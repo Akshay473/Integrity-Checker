@@ -882,12 +882,116 @@ def print_check_report(report: Dict[str, Any]) -> None:
         print("Notice: files not present in the baseline were found.")
 
 
-_SUBCOMMANDS = {"hash", "init", "reinit", "check", "update", "serve"}
+def hash_stdin() -> Dict[str, Any]:
+    digest = hashlib.sha256()
+    size = 0
+    stream = sys.stdin.buffer
+    while True:
+        chunk = stream.read(1024 * 1024)
+        if not chunk:
+            break
+        digest.update(chunk)
+        size += len(chunk)
+    return {"sha256": digest.hexdigest(), "size": size}
+
+
+def run_hash(paths: List[str], as_json: bool) -> int:
+    """Hash each path; keep going after errors and exit 2 if any failed."""
+    rows: List[Dict[str, Any]] = []
+    failed = False
+    for item in paths:
+        try:
+            if item == "-":
+                info = hash_stdin()
+            else:
+                target = canonical_path(item)
+                if not target.is_file():
+                    raise InvalidInput(f"Not a regular file: {item}")
+                info = hash_file(target)
+            rows.append({"path": item, "sha256": info["sha256"], "size": info["size"]})
+            if not as_json:
+                print(f"{info['sha256']}  {item}")
+        except IntegrityError as exc:
+            failed = True
+            rows.append({"path": item, "error": str(exc)})
+            print(f"Error: {exc}", file=sys.stderr)
+    if as_json:
+        print(json.dumps({"algorithm": "SHA-256", "results": rows}, indent=2, ensure_ascii=False))
+    return EXIT_ERROR if failed else EXIT_OK
+
+
+_CHECKSUM_LINE = re.compile(r"^([0-9a-fA-F]{64}) [ *](.+)$")
+
+
+def run_verify(checksum_file: str) -> int:
+    """Check files listed in a sha256sum-style file (relative paths resolve
+    against the checksum file's folder). Exit 1 on mismatch/missing, 2 on bad input."""
+    list_path = canonical_path(checksum_file)
+    if not list_path.is_file():
+        raise InvalidInput(f"Not a regular file: {checksum_file}")
+    try:
+        lines = list_path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError) as exc:
+        raise IntegrityError(f"Could not read {checksum_file}: {exc}") from exc
+    ok = bad = missing = malformed = 0
+    for number, line in enumerate(lines, 1):
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        match = _CHECKSUM_LINE.match(line)
+        if not match:
+            malformed += 1
+            print(f"Line {number}: improperly formatted, skipped", file=sys.stderr)
+            continue
+        expected, name = match.group(1).lower(), match.group(2)
+        target = Path(name)
+        if not target.is_absolute():
+            target = list_path.parent / target
+        if not target.is_file():
+            missing += 1
+            print(f"{name}: MISSING")
+            continue
+        try:
+            actual = hash_file(target)["sha256"]
+        except IntegrityError as exc:
+            missing += 1
+            print(f"{name}: ERROR ({exc})")
+            continue
+        if hmac.compare_digest(actual, expected):
+            ok += 1
+            print(f"{name}: OK")
+        else:
+            bad += 1
+            print(f"{name}: FAILED")
+    print(f"Summary: {ok} OK, {bad} failed, {missing} missing, {malformed} malformed")
+    if ok + bad + missing == 0:
+        print("Error: no valid checksum lines found", file=sys.stderr)
+        return EXIT_ERROR
+    if malformed:
+        return EXIT_ERROR
+    return EXIT_DISCREPANCY if (bad or missing) else EXIT_OK
+
+
+_SUBCOMMANDS = {"hash", "verify", "init", "reinit", "check", "update", "serve"}
 
 
 def _is_simple_path_invocation(argv: List[str]) -> Optional[str]:
-    """Return the path argument if the user passed a bare path with no subcommand."""
-    positionals = [a for a in argv if not a.startswith("-")]
+    """Return the path argument if the user passed a bare path with no subcommand.
+
+    Values of --store are skipped so that ``--store DIR check PATH`` is not
+    mistaken for a bare path invocation.
+    """
+    positionals: List[str] = []
+    skip_next = False
+    for arg in argv:
+        if skip_next:
+            skip_next = False
+            continue
+        if arg == "--store":
+            skip_next = True
+            continue
+        if arg.startswith("--store=") or arg.startswith("-"):
+            continue
+        positionals.append(arg)
     if not positionals:
         return None
     first = positionals[0]
@@ -929,8 +1033,16 @@ def build_parser() -> argparse.ArgumentParser:
             help="Baseline store directory. Defaults to the user state directory.",
         )
 
-    hash_parser = subparsers.add_parser("hash", help="Print the SHA-256 hash of a file.")
-    hash_parser.add_argument("path", help="File to hash.")
+    hash_parser = subparsers.add_parser(
+        "hash", help="Print the SHA-256 hash of one or more files (use - for stdin)."
+    )
+    hash_parser.add_argument("paths", nargs="+", metavar="path", help="File(s) to hash, or - for stdin.")
+    hash_parser.add_argument("--json", action="store_true", default=False, help="Print results as JSON.")
+
+    verify_parser = subparsers.add_parser(
+        "verify", help="Verify files against a sha256sum-style checksum list."
+    )
+    verify_parser.add_argument("checksum_file", help="File with lines of '<sha256>  <path>'.")
 
     init_parser = subparsers.add_parser("init", help="Create a new baseline.")
     init_parser.add_argument("path", help="File or directory to baseline.")
@@ -1231,11 +1343,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         if args.command == "serve":
             return run_server(store, args.host, args.port)
         if args.command == "hash":
-            target = canonical_path(args.path)
-            if not target.is_file():
-                raise InvalidInput(f"Not a regular file: {args.path}")
-            print(f"{hash_file(target)['sha256']}  {args.path}")
-            return EXIT_OK
+            return run_hash(args.paths, args.json)
+        if args.command == "verify":
+            return run_verify(args.checksum_file)
         ensure_store(store)
         if args.command == "init":
             result = perform_init(args.path, store, force=args.force)
