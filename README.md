@@ -37,6 +37,30 @@ python app.py hash path/to/file
 
 Prints the SHA-256 hash and the file name, same format as `sha256sum`.
 
+Several files, standard input, and JSON output are supported:
+
+```bash
+python app.py hash a.log b.log          # one line per file
+cat a.log | python app.py hash -        # hash standard input
+python app.py hash a.log --json         # machine-readable output
+```
+
+If one file cannot be read the others are still hashed and the exit code is `2`.
+
+## Verify against a checksum list
+
+`verify` checks files against a `sha256sum`-style list (`<sha256>  <path>`).
+Relative paths are resolved from the list file's folder.
+
+```bash
+python app.py hash a.log b.log > SHA256SUMS
+python app.py verify SHA256SUMS
+```
+
+Output is `OK`, `FAILED` or `MISSING` per file plus a summary. Exit code `0` if
+everything matches, `1` on any mismatch or missing file, `2` if the list is
+unreadable or malformed.
+
 ## Quick start
 
 Just pass a file or directory — the tool figures out what to do:
@@ -102,6 +126,8 @@ Advanced subcommands are also available when you need more control:
 | `check PATH` | Explicitly compare a file or directory against the stored baseline. |
 | `update PATH` | Accept the current state of a file or directory as trusted and write it to the baseline. |
 | `reinit PATH` | Replace an existing baseline for the path. Same as `init PATH --force`. |
+| `hash FILE...` | Print SHA-256 of files (or `-` for stdin). |
+| `verify LIST` | Check files against a `sha256sum`-style list. |
 | `serve` | Start the local web interface. |
 
 Global options:
@@ -209,5 +235,7 @@ It does not identify who changed the file or why.
 | File | Purpose |
 | --- | --- |
 | `app.py` | Complete CLI, baseline store, hashing logic, and web interface. |
+| `tests/test_app.py` | Unit tests (`python -m unittest discover -s tests`). |
+| `.github/workflows/ci.yml` | Runs the tests on Linux, macOS and Windows. |
 | `README.md` | This document. |
 | `.gitignore` | Keeps Python cache and virtual environment files out of version control. |
